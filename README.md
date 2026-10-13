@@ -1,193 +1,158 @@
-# 🛠️ CareConnect — Home Services Operations & Marketplace Platform
+# CareConnect — Home Services & Care Platform
 
-> **Capstone Project**: A full-stack MERN (MongoDB, Express, React, Node.js) home services marketplace and operations management platform featuring 5 role-based dashboards, AI-assisted request classification, provider matching, booking lifecycle tracking, invoicing, disputes, and analytics.
-
----
-
-## 🌟 Executive Summary
-
-**CareConnect** connects homeowners and clients with verified professional service providers (plumbers, electricians, cleaners, technicians) through an end-to-end workflow:
-
-1. **Intelligent Service Request**: Customers post issues; built-in AI classifies the domain and extracts required skills.
-2. **Provider Discovery & Quotes**: Verified providers receive matched requests and submit competitive quotes.
-3. **Smart Scheduling & Booking**: Conflict-free availability slot engine prevents overlapping appointments.
-4. **Job Execution & Evidence Tracking**: Real-time job status updates (`pending` → `en_route` → `started` → `completed`), work notes, before/after evidence photos, and customer sign-off.
-5. **Billing & Invoices**: Itemized invoice generation with tax, platform fees, and status tracking.
-6. **Accountability & Quality**: Rating and review system, dispute resolution workflows with audit logging.
+CareConnect is an end-to-end service coordination platform connecting customers with verified local service professionals (plumbers, electricians, carpenters, cleaners) featuring transparent job verification, digital payments, dispute handling, provider geo-mapping, and administrative oversight.
 
 ---
 
-## 🏛️ System Architecture
-
-```mermaid
-graph TD
-    Client[React 19 + Vite Frontend] -->|REST API + JWT Bearer| API[Express.js Gateway /api/v1]
-    
-    subgraph Backend [Node.js & Express Architecture]
-        API --> AuthMW[Auth & RBAC Middleware]
-        AuthMW --> Controllers[Controllers Layer]
-        Controllers --> Services[Business Services]
-        Services --> AIService[AI Classification & Ranking Engine]
-        Services --> NotifService[Notification Engine]
-        Controllers --> Models[Mongoose Data Models]
-    end
-
-    subgraph Database [MongoDB]
-        Models --> MongoDB[(MongoDB Collections)]
-    end
-```
-
----
-
-## 👥 Multi-Role Access Control (RBAC)
-
-The platform implements 5 distinct personas with specialized permissions and views:
-
-| Role | Core Responsibilities & Features |
-| :--- | :--- |
-| **Customer** | Post service requests, view AI-suggested providers, accept quotes, track live job status, upload confirmation, pay invoices, submit reviews, raise disputes, and chat with assigned providers. |
-| **Provider** | Manage business profile, set weekly availability slots, browse matching requests, submit price quotes, update job status (`en_route`, `started`, `completed`), attach before/after photos, and issue invoices. |
-| **Operations Manager** | Oversee platform operations, inspect live booking flows, reassign jobs, manage service categories, and analyze operational bottlenecks. |
-| **Support Agent** | Investigate customer/provider disputes, review evidence, communicate with parties, and resolve disputes with resolution notes. |
-| **Administrator** | Manage user accounts (activate/deactivate), review provider KYC verification documents, inspect audit trails, and view platform-wide financial & volume analytics. |
-
----
-
-## 💻 Tech Stack
-
-### **Frontend**
-- **Framework:** React 19 (via Vite)
-- **Routing:** React Router v7
-- **Styling:** Tailwind CSS + Vanilla CSS Design System
-- **Icons:** Lucide React
-- **Visualizations:** Recharts (Analytics dashboards)
-- **Maps:** Leaflet & React-Leaflet
-- **HTTP Client:** Axios with JWT request interceptors
-
-### **Backend**
-- **Runtime:** Node.js 18+ & Express.js
-- **Database:** MongoDB with Mongoose ODM
-- **Authentication:** JWT (JSON Web Tokens) with `bcryptjs` password hashing
-- **Security:** CORS configuration, input sanitization, error-handling middleware
-- **Architecture:** Clean MVC (`Routes → Middleware → Controllers → Services → Models`)
-
----
-
-## 📁 Repository Structure
+## Architecture Overview
 
 ```
 careconnect/
-├── README.md                 # Project Overview & Capstone Documentation (this file)
-├── backend/                  # Express & MongoDB REST API
-│   ├── README.md             # Backend API Documentation & Setup Guide
-│   ├── server.js             # Server entry point
-│   ├── package.json          # Backend dependencies and scripts
-│   ├── seed/                 # Database seeder with realistic test data
-│   ├── test/                 # Automated Node.js test suite
-│   └── src/
-│       ├── config/           # Database connection config
-│       ├── controllers/      # Request handlers
-│       ├── middleware/       # Auth, role authorization, and error handling
-│       ├── models/           # Mongoose schemas (14 collections)
-│       ├── routes/           # REST endpoints
-│       ├── services/         # AI classifier, ranking, notifications
-│       └── utils/            # AppError, catchAsync, token helpers
-└── frontend/                 # React + Vite Single Page Application
-    ├── README.md             # Frontend Architecture & Setup Guide
-    ├── package.json          # Frontend dependencies
-    ├── vite.config.js        # Vite configuration
-    ├── vercel.json           # Vercel SPA rewrite rules
-    ├── public/
-    │   └── _redirects        # Netlify SPA routing fallback
-    └── src/
-        ├── api.js            # Axios client with bearer token injection
-        ├── App.jsx           # Master route table & role gates
-        ├── components/       # Reusable UI components (Navbar, Layout, ProtectedRoute)
-        ├── context/          # Auth state provider
-        ├── pages/            # 22 role-specific screens & dashboards
-        └── utils/            # Role normalizers and helper functions
+├── backend/                  # Express REST API & MongoDB database layer
+│   ├── src/
+│   │   ├── config/           # MongoDB connection & index safeguards (db.js)
+│   │   ├── controllers/      # Business logic (auth, serviceRequest, admin, workspace, dashboard)
+│   │   ├── middleware/       # JWT authentication, role authorization & error handling
+│   │   ├── models/           # Mongoose schemas (User)
+│   │   ├── routes/           # REST endpoints (/api/auth, /api/service-requests, /api/admin, etc.)
+│   │   └── utils/            # JWT token generation
+│   ├── seed/                 # Database seeder (seedData.js)
+│   ├── test/                 # Test suite (node:test)
+│   ├── server.js             # API entrypoint (Port 5000)
+│   └── .env.example          # Environment configuration template
+├── frontend/                 # Workspace client (HTML, CSS, Vanilla JS)
+│   ├── app.js                # Dynamic workspace router, state management & Leaflet map
+│   ├── styles.css            # Clean, responsive design system
+│   ├── index.html            # Web entry point
+│   └── server.js             # Static file server & API reverse-proxy (Port 5175)
+└── package.json              # Unified root development scripts
 ```
 
 ---
 
-## ⚡ Quick Start (Local Development)
+## Complete Service Workflow Lifecycle
 
-### **Prerequisites**
-- Node.js 18+ installed
-- MongoDB running locally OR a free MongoDB Atlas connection URI
+```mermaid
+stateDiagram-v2
+    [*] --> open_for_quotes: Customer submits request
+    open_for_quotes --> cancelled: Customer / Admin cancels
+    open_for_quotes --> accepted: Provider accepts request
+    accepted --> cancelled: Customer / Admin cancels
+    accepted --> in_progress: Provider starts work on-site
+    in_progress --> awaiting_customer_confirmation: Provider marks complete with invoice
+    awaiting_customer_confirmation --> in_progress: Customer reports issue / not complete
+    awaiting_customer_confirmation --> awaiting_payment: Customer confirms completion
+    awaiting_payment --> completed: Customer settles payment
+    completed --> [*]: Customer submits rating & review
+```
 
-### **1. Setup Backend**
+1. **Submit Request**: Customer specifies service details, category, city, urgency, and preferred date (`open_for_quotes`).
+2. **Provider Assignment**: Verified providers view available tasks and accept (`accepted`).
+3. **Work In Progress**: Provider marks "Start Service" upon arriving on-site (`in_progress`).
+4. **Completion & Invoicing**: Provider finishes work and submits agreed total amount (`awaiting_customer_confirmation`). A pending invoice is created.
+5. **Customer Verification**:
+   - **Confirm**: Customer verifies satisfactory completion & activates payment step (`awaiting_payment`).
+   - **Dispute / Reject**: Customer reports work not done; reverts to `in_progress` with feedback note to the provider.
+6. **Payment Settlement**: Customer pays via Card, Cash, UPI, or Bank Transfer. Invoice updates to `paid` and funds register in provider earnings (`completed`).
+7. **Rate & Review**: Customer submits 1–5 star rating and feedback, dynamically recalculating the provider's overall score.
+
+---
+
+## Quick Start Guide
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [MongoDB](https://www.mongodb.com/) running locally (`mongodb://127.0.0.1:27017`) or a MongoDB Atlas URI
+
+### 1. Installation
+Clone the repository and install dependencies:
 ```bash
+# Install backend dependencies
 cd backend
-
-# Install dependencies
 npm install
+cd ..
 
-# Configure environment
-cp .env.example .env
-# Open .env and set your MONGO_URI and JWT_SECRET
+# Install frontend dependencies (if needed)
+cd frontend
+npm install
+cd ..
+```
 
-# Populate database with demo accounts, categories, and sample data
+### 2. Environment Setup
+Copy the environment template in the `backend/` folder:
+```bash
+copy backend\.env.example backend\.env
+```
+Ensure your `backend/.env` file contains:
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=mongodb://127.0.0.1:27017/careconnect
+JWT_SECRET=careconnect-local-dev-signing-key-change-before-production-2026
+JWT_EXPIRES_IN=7d
+```
+
+### 3. Seed Demo Data
+Populate the database with pre-configured users, provider profiles with GPS coordinates, active service requests in each stage, invoices, and notifications:
+```bash
 npm run seed
-
-# Start backend dev server (Runs on port 5000)
-npm run dev
 ```
 
-### **2. Setup Frontend**
+### 4. Run the Application
+Start the backend and frontend dev servers (open two terminal windows or run root commands):
+
 ```bash
-# In a separate terminal
-cd frontend
+# Terminal 1 — Start API Backend (runs on http://localhost:5000)
+npm run backend
 
-# Install dependencies
-npm install
-
-# Start Vite dev server (Runs on http://localhost:5173)
-npm run dev
+# Terminal 2 — Start Frontend Workspace (runs on http://localhost:5175)
+npm run frontend
 ```
 
-Visit **`http://localhost:5173`** to access the platform.
+Now open [http://localhost:5175](http://localhost:5175) in your web browser.
 
 ---
 
-## 🔑 Demo Test Accounts
+## Demo Accounts
 
-The seed script (`npm run seed` in backend) creates realistic accounts for all platform roles.
+You can click any of the **Quick Demo Logins** on the sign-in page, or log in with these credentials:
 
-| Role | Email | Password | Primary Feature to Test |
+| Role | Email | Password | What You Can Test |
 | :--- | :--- | :--- | :--- |
-| **Customer** | `customer1@demo.com` | `password123` | Post request, view quotes, track job |
-| **Provider (Verified)** | `provider1@demo.com` | `password123` | Manage calendar slots, submit quotes, upload job evidence |
-| **Provider (Pending)** | `provider2@demo.com` | `password123` | View pending verification state |
-| **Operations Manager**| `ops@demo.com` | `password123` | Operational dashboard, category manager |
-| **Support Agent** | `support@demo.com` | `password123` | Dispute resolution queue |
-| **Admin** | `admin@demo.com` | `password123` | Platform analytics, user activation, audit logs |
+| **Administrator** | `admin@careconnect.lk` | `Admin@123` | Provider management, platform-wide revenue, cancel requests |
+| **Customer** | `anoma.wijesinghe@careconnect.lk` | `Pass@123` | Create requests, verify completed work, pay invoices, submit reviews |
+| **Service Provider** | `kamal.perera@careconnect.lk` | `Pass@123` | Accept requests, start jobs, mark work complete with billing |
 
 ---
 
-## 🚀 Deployment Guide
+## Testing
 
-Detailed deployment instructions for free cloud providers:
-
-1. **Database:** Deploy a free M0 Cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-2. **Backend:** Deploy on [Render](https://render.com) or [Railway](https://railway.app) as a Web Service. Set root directory to `backend`, build command `npm install`, start command `npm start`.
-3. **Frontend:** Deploy on [Vercel](https://vercel.com) or [Netlify](https://netlify.com). Set root directory to `frontend`, build command `npm run build`, output directory `dist`. Add `VITE_API_URL` pointing to your deployed backend API URL.
-
----
-
-## 🧪 Testing & Validation
-
+Run the automated test suite using the built-in Node test runner:
 ```bash
-# Run backend service unit tests
-cd backend
 npm test
-
-# Verify frontend production build
-cd frontend
-npm run build
 ```
+All tests validate request state transitions, provider invoice limits, customer cancellation permissions, and review submissions.
 
 ---
 
-## 📄 License & Attribution
-Developed as an academic capstone project demonstrating modern full-stack web engineering, scalable role-based architecture, and clean code practices.
+## API Summary
+
+| Method | Endpoint | Role | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/health` | Public | System status and uptime |
+| `POST` | `/api/auth/register` | Public | Register customer/provider (auto-creates profile) |
+| `POST` | `/api/auth/login` | Public | Authenticate user & receive JWT |
+| `GET` | `/api/service-requests` | Authenticated | List service requests with role scoping |
+| `POST` | `/api/service-requests` | Customer | Create a new service request |
+| `POST` | `/api/service-requests/:id/accept` | Provider | Accept an open service request |
+| `POST` | `/api/service-requests/:id/start` | Provider | Start work on accepted request |
+| `POST` | `/api/service-requests/:id/complete` | Provider | Mark work complete & generate invoice |
+| `POST` | `/api/service-requests/:id/confirm` | Customer | Confirm task completion |
+| `POST` | `/api/service-requests/:id/reject-completion` | Customer | Dispute / report task incomplete |
+| `POST` | `/api/service-requests/:id/pay` | Customer | Settle invoice with payment method |
+| `POST` | `/api/service-requests/:id/review` | Customer | Rate and review completed service |
+| `POST` | `/api/service-requests/:id/cancel` | Customer / Admin | Cancel open or accepted request |
+| `GET` | `/api/map/providers` | Authenticated | List verified providers with GPS coordinates |
+| `GET` | `/api/payments` | Authenticated | View invoice history & revenue summaries |
+| `GET` | `/api/admin/providers` | Admin | List all providers with individual stats |
+| `POST` | `/api/admin/providers` | Admin | Manually provision new provider account |
