@@ -113,6 +113,23 @@ Now open [http://localhost:5175](http://localhost:5175) in your web browser.
 
 ---
 
+## Deploy the Frontend to Vercel
+
+Create a Vercel project for this repository with these settings:
+
+| Setting | Value |
+| :--- | :--- |
+| Root Directory | `frontend` |
+| Framework Preset | `Other` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+
+The build copies the static app entry point and its assets into `frontend/dist`. Do not use the `Node` or `Vite` preset for this frontend: its deployed entry point is `frontend/index.html`, not the unused React/Vite source under `frontend/src`.
+
+The frontend calls the API at `/api`, which works locally through `frontend/server.js`. A Vercel static deployment does not run that local proxy or the backend. Deploy the backend separately and configure a Vercel rewrite from `/api/*` to the deployed backend URL; configure the backend to allow requests from the Vercel site.
+
+---
+
 ## Demo Accounts
 
 You can click any of the **Quick Demo Logins** on the sign-in page, or log in with these credentials:
